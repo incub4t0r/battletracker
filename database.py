@@ -56,5 +56,11 @@ class Database:
 
     def __del__(self):
         self.conn.close()
+    
+    def clear(self):
+        self.cur.execute("DELETE FROM challenge")
+        self.cur.execute("DELETE FROM members")
+        self.conn.commit()
+
 
 # db = Database('store.db')

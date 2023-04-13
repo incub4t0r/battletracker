@@ -1,4 +1,46 @@
 <script>
+    // make an ajax get request to localhost:8000/challenges to get the challenge data
+    import { onMount } from 'svelte';
+    /**
+     * @type {any[]}
+     */
+    let challenge_data = [];
+    onMount(async() => {
+        const response = await fetch("http://localhost:8000/challenges",
+            {
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+            })
+            .then((response) => response.json())
+            .then((data) => {
+                console.log(data);
+                challenge_data = [...challenge_data, challenge_data];
+            })
+            .catch((error) => {
+                console.error("Error:", error);
+            });
+    });
+    // const response = await fetch("http://localhost:8000/challenges",
+    //     {
+    //         method: "GET",
+    //         headers: {
+    //             "Content-Type": "application/json",
+    //         },
+    //     })
+    //     .then((response) => response.json())
+    //     .then((data) => {
+    //         console.log(data);
+    //     })
+    //     .catch((error) => {
+    //         console.error("Error:", error);
+    //     });
+
+    // make an ajax get request to localhost:8000/members to get the member data
+
+
+
     let member_data = [
         {
             id: "1",
@@ -59,11 +101,11 @@
         );
     }
 
-    let challenge_data = [
-        { name: "whoami" },
-        { name: "stegosaurus" },
-        { name: "devel" },
-    ];
+    // let challenge_data = [
+    //     { name: "whoami" },
+    //     { name: "stegosaurus" },
+    //     { name: "devel" },
+    // ];
 
     let new_challenge = {
         name: "",

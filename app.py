@@ -1,11 +1,23 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
 from uuid import uuid4
-
+import json
 from database import Database
+# disable fastapi cors
+from fastapi.middleware.cors import CORSMiddleware
+
 
 db = Database('store.db')
 app = FastAPI()
+# disable fastapi cors
+origins = ["*"]
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 class NewChallenge(BaseModel):
     name: str
@@ -30,7 +42,17 @@ def read_root():
 
 @app.get("/challenges")
 async def read_challenges():
-    return db.fetchall()
+    results = db.fetchall_challenge()
+    json_results = []
+    for result in results:
+        json_results.append({
+            "id": result[0],
+            "name": result[1],
+            "member": result[2],
+            "start_time": result[3]
+        })
+    return json_results
+    # return db.fetchall_challenge()
 
 @app.get("/challenges/{challenge_id}")
 async def read_item(challenge_id: str):
@@ -81,6 +103,21 @@ async def delete_member(member: Member):
     db.remove_member(member.id)
     return {"member_id": member.id + " deleted"}
 
+def test():
+    db.clear()
+    class Challenge(object):
+        def __init__(self, name, id):
+            self.name = name
+            self.id = id
+
+    challenge_one = Challenge(name="challenge_one", id=str(uuid4())) 
+    db.insert_challenge(challenge_one.id, challenge_one.name, "None", "1200")
+    challenge_two = Challenge(name="challenge_two", id=str(uuid4()))
+    db.insert_challenge(challenge_two.id, challenge_two.name, "None", "1400")
+    db.insert_member(str(uuid4()), "name1")
+    db.insert_member(str(uuid4()), "name2")
+
 if __name__ == "__main__":
+    test()
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
