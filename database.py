@@ -8,10 +8,15 @@ class Database:
         self.cur = self.conn.cursor()
         # self.cur.execute("DROP TABLE challenge")
         # self.cur.execute("DROP TABLE members")
-        self.cur.execute("CREATE TABLE IF NOT EXISTS challenge (id text, name text, member text, start_time text, checkin_time text)")
+        self.cur.execute("CREATE TABLE IF NOT EXISTS challenge (id text, name text, member text, start_time text, checkin_time text, completed boolean)")
         self.cur.execute("CREATE TABLE IF NOT EXISTS members (id text, name text)")
         self.conn.commit()
     
+
+    ############################################################
+    # Challenges
+    ############################################################
+
     def fetch_challenge(self, id):
         self.cur.execute("SELECT * FROM challenge WHERE id=?", (id,))
         rows = self.cur.fetchone()
@@ -23,21 +28,25 @@ class Database:
         return rows
 
     def insert_challenge(self, id, name, member, start_time, checkin_time):
-        self.cur.execute("INSERT INTO challenge VALUES (?, ?, ?, ?, ?)", (id, name, member, start_time, checkin_time))
+        self.cur.execute("INSERT INTO challenge VALUES (?, ?, ?, ?, ?, False)", (id, name, member, start_time, checkin_time))
         self.conn.commit()
 
     def remove_challenge(self, id):
         self.cur.execute("DELETE FROM challenge WHERE id=?", (id,))
         self.conn.commit()
     
-    def update_challenge(self, id, name, member, start_time):
-        self.cur.execute("UPDATE challenge SET name = ?, member = ?, start_time = ? WHERE id = ?", (name, member, start_time, id))
+    def update_challenge(self, id, member, completed):
+        self.cur.execute("UPDATE challenge SET member = ?, completed = ? WHERE id = ?", (member, completed, id))
+        print("updated challenge")
         self.conn.commit()
+    ############################################################
+    # Members
+    ############################################################
 
-    def fetch_member(self, id):
-        self.cur.execute("SELECT * FROM members WHERE id=?", (id,))
-        rows = self.cur.fetchone()
-        return rows
+    # def fetch_member(self, id):
+    #     self.cur.execute("SELECT * FROM members WHERE id=?", (id,))
+    #     rows = self.cur.fetchone()
+    #     return rows
 
     def fetchall_member(self):
         self.cur.execute("SELECT * FROM members")
