@@ -5,7 +5,7 @@ import json
 from database import Database
 # disable fastapi cors
 from fastapi.middleware.cors import CORSMiddleware
-
+from datetime import datetime, timedelta
 
 db = Database('store.db')
 app = FastAPI()
@@ -22,8 +22,10 @@ app.add_middleware(
 class NewChallenge(BaseModel):
     name: str
 class Challenge(BaseModel):
-    name: str
     id: str
+    name: str
+    member: str
+    completed: bool
 
 class NewMember(BaseModel):
     name: str
@@ -50,7 +52,8 @@ async def read_challenges():
             "name": result[1],
             "member": result[2],
             "start_time": result[3],
-            "checkin_time": result[4]
+            "checkin_time": result[4],
+            "completed": result[5]
         })
     print(json.dumps(json_results))
     return json_results
@@ -58,15 +61,18 @@ async def read_challenges():
 
 @app.post("/challenges")
 async def create_item(new_challenge: NewChallenge):
+    start_time = datetime.now().strftime("%H%M")
+    checkin_time = (datetime.now() + timedelta(minutes=30)).strftime("%H%M")
     unique_id = str(uuid4())
-    db.insert_challenge(unique_id, new_challenge.name, "None", "None")
+    db.insert_challenge(unique_id, new_challenge.name, "None", start_time, checkin_time)
     return {"challenge_name": new_challenge.name, "challenge_id": unique_id}
 
 @app.put("/challenges")
-async def update_item(challenge:Challenge, member: Member):
-    db.update_challenge(challenge.id, challenge.name, member.id, "None")
-# async def update_item(challenge_id: str, challenge: Challenge):
-    return {"challenge_name": challenge.name, "challenge_id": challenge.id}
+async def update_item(challenge: Challenge):
+    db.update_challenge(challenge.id, challenge.member, challenge.completed)
+
+    # db.update_challenge(challenge.id, challenge.name, challenge.member)
+    return {"challenge_name": challenge.name, "challenge_id": challenge.id, "challenge_member": challenge.member, "challenge_completed": challenge.completed}
 
 @app.delete("/challenges")
 # async def delete_item(challenge_id: str):
@@ -93,8 +99,8 @@ async def read_members():
 @app.post("/members")
 async def create_member(new_member: NewMember):
     unique_id = str(uuid4())
-    db.insert_member(unique_id, NewMember.name)
-    return {"member_name": NewMember.name, "member_id": unique_id}
+    db.insert_member(unique_id, new_member.name)
+    return {"member_name": new_member.name, "member_id": unique_id}
 
 @app.put("/members")
 async def update_member(member: Member):
@@ -117,6 +123,9 @@ def test():
     db.insert_challenge(challenge_one.id, challenge_one.name, "None", "1200", "1230")
     challenge_two = Challenge(name="challenge_two", id=str(uuid4()))
     db.insert_challenge(challenge_two.id, challenge_two.name, "None", "1400", "1230")
+    challenge_three = Challenge(name="challenge_three", id=str(uuid4()))
+    db.insert_challenge(challenge_three.id, challenge_three.name, "None", "1400", "1230")
+    db.update_challenge(challenge_three.id, "the best", True)
     db.insert_member(str(uuid4()), "name1")
     db.insert_member(str(uuid4()), "name2")
 

@@ -1,82 +1,86 @@
 <script>
-    import { onMount } from 'svelte';
+    import { onMount } from "svelte";
     /**
      * @type {any[]}
      */
-    let challenge_data =  [];
+    $: challenge_data = [];
+
     /**
      * @type {any[]}
      */
     let member_data = [];
 
-    async function get_challenge_data(){
-        const challenge_response = await fetch("http://localhost:8000/challenges",
+    async function get_challenge_data() {
+        const challenge_response = await fetch(
+            "http://localhost:8000/challenges",
             {
                 method: "GET",
                 headers: {
                     "Content-Type": "application/json",
                 },
-            })
+            }
+        )
             .then((challenge_response) => challenge_response.json())
             .then((data) => {
-                // console.log(data);
+                console.log(data);
                 challenge_data = data;
-                // challenge_data = [...challenge_data, data];
             })
             .catch((error) => {
                 console.error("Error:", error);
                 alert("Error: " + error);
-            }
-        );
+            });
     }
 
-    async function get_member_data(){
-        const member_response = await fetch("http://localhost:8000/members",
-            {
-                method: "GET",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-            })
+    async function get_member_data() {
+        const member_response = await fetch("http://localhost:8000/members", {
+            method: "GET",
+            headers: {
+                "Content-Type": "application/json",
+            },
+        })
             .then((member_response) => member_response.json())
             .then((data) => {
-                // console.log(data);
                 member_data = data;
-                // member_data = [...member_data, data];
             })
             .catch((error) => {
                 console.error("Error:", error);
                 alert("Error: " + error);
-            }
-        );
+            });
     }
 
-    onMount(async() => {
+    onMount(async () => {
         get_challenge_data();
         get_member_data();
     });
 
-    // generate id from random
-    let next_id = (member_data.length + 1).toString();
     let new_member = {
-        id: next_id,
         name: "",
-        current_challenge: "",
-        start_time: "",
-        check_in_time: "",
-    }
+    };
 
-    function create_member() {
+    async function create_member() {
         console.log("Adding new member...");
-        member_data = [...member_data, new_member];
-        next_id = (member_data.length + 1).toString();
+        //
+        const create_member_response = await fetch(
+            "http://localhost:8000/members",
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(new_member),
+            }
+        )
+            .then((create_member_response) => create_member_response.json())
+            .then((data) => {
+                get_member_data();
+            })
+            .catch((error) => {
+                console.error("Error:", error);
+                alert("Error: " + error);
+            });
         new_member = {
-            id: next_id,
             name: "",
-            current_challenge: "",
-            start_time: "",
-            check_in_time: "",
-        }
+        };
     }
 
     /**
@@ -102,38 +106,86 @@
         name: "",
     };
 
-    function add_new_challenge() {
+    async function add_new_challenge() {
         console.log("Adding new challenge...");
-        challenge_data = [...challenge_data, new_challenge];
-        new_challenge = {
-            name: "",
-        };
-    }
-
-    async function assign_challenge() {
-        console.log("Assigning challenge...");
-        // web request to put to localhost:8000/challenges
-        const member_response = await fetch("http://localhost:8000/challenges",
+        const create_response = await fetch(
+            "http://localhost:8000/challenges",
             {
-                method: "PUT",
+                method: "POST",
                 headers: {
                     "Content-Type": "application/json",
                 },
-                // body: JSON.stringify({""}),
-            })
-            .then((member_response) => member_response.json())
+                body: JSON.stringify(new_challenge),
+            }
+        )
+            .then((create_response) => create_response.json())
             .then((data) => {
-                console.log(data);
-                member_data = [...member_data, data];
+                get_challenge_data();
             })
             .catch((error) => {
                 console.error("Error:", error);
                 alert("Error: " + error);
             }
-        );
+        )
+        new_challenge = {
+            name: "",
+        };
     }
-</script>
 
+    
+    /**
+     * @param {any} challenge_data
+     */
+    async function assign_challenge(challenge_data) {
+        console.log(challenge_data);
+        console.log("Assigning challenge...");
+        const assign_response = await fetch(
+            "http://localhost:8000/challenges",
+            {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(challenge_data),
+            }
+        )
+            .then((assign_response) => assign_response.json())
+            .then((data) => {
+                get_challenge_data();
+            })
+            .catch((error) => {
+                console.error("Error:", error);
+                alert("Error: " + error);
+            });
+    }
+
+    /**
+     * @param {any} challenge_data
+     */
+    async function complete_challenge(challenge_data) {
+        console.log(challenge_data);
+        challenge_data.completed = true;
+        console.log("Completing challenge...");
+        const complete_response = await fetch(
+            "http://localhost:8000/challenges",
+            {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(challenge_data),
+            }
+        )
+            .then((complete_response) => complete_response.json())
+            .then((data) => {
+                get_challenge_data();
+            })
+            .catch((error) => {
+                console.error("Error:", error);
+                alert("Error: " + error);
+            });
+    };
+</script>
 
 <div class="container my-4">
     <div class="row justify-content-lg-center">
@@ -148,25 +200,50 @@
                                 <th scope="col">Start Time</th>
                                 <th scope="col">Check-in Time</th>
                                 <th scope="col">Checked in?</th>
+                                <th scope="col">Completed</th>
                             </tr>
                         </thead>
                         <tbody id="challenge_content">
                             {#if challenge_data.length > 0}
-                                {#each challenge_data as data}
+                                {#each challenge_data as challenge}
+                                    {#if !challenge.completed}
                                     <tr>
-                                        <td>{data.member}</td>
-                                        <td>{data.name}</td>
-                                        <td>{data.start_time}</td>
-                                        <td>{data.checkin_time}</td>
+                                        <td>
+                                            <select
+                                                class="form-select"
+                                                aria-label="Default select example"
+                                                placeholder="Select member to assign"
+                                                required
+                                                bind:value={challenge.member}
+                                                on:change={() => assign_challenge(challenge)}
+                                            >
+                                                {#each member_data as member}
+                                                    <option value={member.name}
+                                                        >{member.name}</option
+                                                    >
+                                                {/each}
+                                            </select>
+                                        </td>
+                                        <td>{challenge.name}</td>
+                                        <td>{challenge.start_time}</td>
+                                        <td>{challenge.checkin_time}</td>
                                         <td>
                                             <button
                                                 class="btn btn-primary"
                                                 on:click={() =>
-                                                    update_time(data.id)}
+                                                    update_time(challenge.id)}
                                                 >Yes</button
                                             >
                                         </td>
+                                        <td>
+                                            <button
+                                                class="btn btn-success"
+                                                on:click={() =>
+                                                    complete_challenge(challenge)}
+                                                >Yes</button
+                                            >
                                     </tr>
+                                    {/if}
                                 {/each}
                             {:else}
                                 <tr>
@@ -186,10 +263,73 @@
             <div class="card">
                 <div class="card-body">
                     <div
+                    class="accordion accordion-flush"
+                    id="accordionCompletedChallenges"
+                >
+                    
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button
+                                class="accordion-button collapsed"
+                                type="button"
+                                data-bs-toggle="collapse"
+                                data-bs-target="#flush-collapseCompleted"
+                                aria-expanded="false"
+                                aria-controls="flush-collapseCompleted"
+                            >
+                                Completed Challenges
+                            </button>
+                        </h2>
+                    </div>
+                </div>
+                <div
+                    id="flush-collapseCompleted"
+                    class="accordion-collapse collapse"
+                    data-bs-parent="#accordionCompletedChallenges"
+                >
+                    <div class="accordion-body">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th scope="col">Member</th>
+                                    <th scope="col">Challenge</th>
+                                </tr>
+                            </thead>
+                            <tbody id="challenge_content">
+                                {#if challenge_data.length > 0}
+                                    {#each challenge_data as challenge}
+                                        {#if challenge.completed}
+                                            <tr>
+                                                <td>{challenge.member}</td>
+                                                <td>{challenge.name}</td>
+                                            </tr>
+                                        {/if}
+                                    {/each}
+                                {:else}
+                                    <tr>
+                                        <td colspan="5">No data found</td>
+                                    </tr>
+                                {/if}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+</div>
+<div class="container my-4">
+    <div class="row justify-content-lg-center">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-body">
+                    <div
                         class="accordion accordion-flush"
                         id="accordionFlushExample"
                     >
-                        <div class="accordion-item">
+                        <!-- <div class="accordion-item">
                             <h2 class="accordion-header">
                                 <button
                                     class="accordion-button collapsed"
@@ -209,7 +349,6 @@
                             >
                                 <div class="accordion-body">
                                     <form on:submit={assign_challenge}>
-                                    <!-- <form action="/progress" method="POST"> -->
                                         <div class="mb-3">
                                             <select
                                                 class="form-select"
@@ -265,7 +404,7 @@
                                     </form>
                                 </div>
                             </div>
-                        </div>
+                        </div> -->
                         <div class="accordion-item">
                             <h2 class="accordion-header">
                                 <button
@@ -276,7 +415,7 @@
                                     aria-expanded="false"
                                     aria-controls="flush-collapseTwo"
                                 >
-                                    Add new challenge
+                                    Challenges
                                 </button>
                             </h2>
                             <div
@@ -285,19 +424,19 @@
                                 data-bs-parent="#accordionFlushExample"
                             >
                                 <div class="accordion-body">
-                                    <form on:submit={add_new_challenge}>
-                                        <!-- <form action="/challenges" method="POST"> -->
-                                        <div class="mb-3">
-                                            <input
-                                                type="text"
-                                                class="form-control"
-                                                id="challenge"
-                                                name="challenge"
-                                                placeholder="Challenge name"
-                                                bind:value={new_challenge.name}
-                                                required
-                                            />
-                                        </div>
+                                    <form
+                                        on:submit={add_new_challenge}
+                                        class="input-group"
+                                    >
+                                        <input
+                                            type="text"
+                                            class="form-control"
+                                            id="challenge"
+                                            name="challenge"
+                                            placeholder="Add new challenge"
+                                            bind:value={new_challenge.name}
+                                            required
+                                        />
                                         <button
                                             type="submit"
                                             class="btn btn-primary"
@@ -317,7 +456,7 @@
                                     aria-expanded="false"
                                     aria-controls="flush-collapseThree"
                                 >
-                                    Add new member
+                                    Members
                                 </button>
                             </h2>
                             <div
@@ -326,26 +465,39 @@
                                 data-bs-parent="#accordionFlushExample"
                             >
                                 <div class="accordion-body">
-                                    <form on:submit={create_member}>
-
-                                    <!-- <form action="/members" method="POST"> -->
-                                        <div class="mb-3">
-                                            <input
-                                                type="text"
-                                                class="form-control"
-                                                id="member_name"
-                                                name="member_name"
-                                                placeholder="Enter member name"
-                                                bind:value={new_member.name}
-                                                required
-                                            />
-                                        </div>
+                                    <form on:submit={create_member} class="input-group mb-3">
+                                        <input
+                                            type="text"
+                                            class="form-control"
+                                            id="member_name"
+                                            name="member_name"
+                                            placeholder="Add a new member"
+                                            bind:value={new_member.name}
+                                            required
+                                        />
                                         <button
                                             type="submit"
                                             class="btn btn-primary"
                                             >Submit</button
                                         >
                                     </form>
+
+                                    <!-- <form on:submit={create_member} class="input-group">
+                                        <input
+                                            type="text"
+                                            class="form-control"
+                                            id="member_name"
+                                            name="member_name"
+                                            placeholder="Delete a member"
+                                            bind:value={new_member.name}
+                                            required
+                                        />
+                                        <button
+                                            type="submit"
+                                            class="btn btn-primary"
+                                            >Submit</button
+                                        >
+                                    </form> -->
                                 </div>
                             </div>
                         </div>
