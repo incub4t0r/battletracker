@@ -6,7 +6,9 @@ class Database:
     def __init__(self, db):
         self.conn = sqlite3.connect(db)
         self.cur = self.conn.cursor()
-        self.cur.execute("CREATE TABLE IF NOT EXISTS challenge (id text, name text, member text, start_time text)")
+        # self.cur.execute("DROP TABLE challenge")
+        # self.cur.execute("DROP TABLE members")
+        self.cur.execute("CREATE TABLE IF NOT EXISTS challenge (id text, name text, member text, start_time text, checkin_time text)")
         self.cur.execute("CREATE TABLE IF NOT EXISTS members (id text, name text)")
         self.conn.commit()
     
@@ -20,8 +22,8 @@ class Database:
         rows = self.cur.fetchall()
         return rows
 
-    def insert_challenge(self, id, name, member, start_time):
-        self.cur.execute("INSERT INTO challenge VALUES (?, ?, ?, ?)", (id, name, member, start_time))
+    def insert_challenge(self, id, name, member, start_time, checkin_time):
+        self.cur.execute("INSERT INTO challenge VALUES (?, ?, ?, ?, ?)", (id, name, member, start_time, checkin_time))
         self.conn.commit()
 
     def remove_challenge(self, id):
@@ -61,6 +63,5 @@ class Database:
         self.cur.execute("DELETE FROM challenge")
         self.cur.execute("DELETE FROM members")
         self.conn.commit()
-
 
 # db = Database('store.db')

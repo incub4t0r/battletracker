@@ -1,71 +1,62 @@
 <script>
-    // make an ajax get request to localhost:8000/challenges to get the challenge data
     import { onMount } from 'svelte';
     /**
      * @type {any[]}
      */
-    let challenge_data = [];
-    onMount(async() => {
-        const response = await fetch("http://localhost:8000/challenges",
+    let challenge_data =  [];
+    /**
+     * @type {any[]}
+     */
+    let member_data = [];
+
+    async function get_challenge_data(){
+        const challenge_response = await fetch("http://localhost:8000/challenges",
             {
                 method: "GET",
                 headers: {
                     "Content-Type": "application/json",
                 },
             })
-            .then((response) => response.json())
+            .then((challenge_response) => challenge_response.json())
             .then((data) => {
-                console.log(data);
-                challenge_data = [...challenge_data, challenge_data];
+                // console.log(data);
+                challenge_data = data;
+                // challenge_data = [...challenge_data, data];
             })
             .catch((error) => {
                 console.error("Error:", error);
-            });
+                alert("Error: " + error);
+            }
+        );
+    }
+
+    async function get_member_data(){
+        const member_response = await fetch("http://localhost:8000/members",
+            {
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+            })
+            .then((member_response) => member_response.json())
+            .then((data) => {
+                // console.log(data);
+                member_data = data;
+                // member_data = [...member_data, data];
+            })
+            .catch((error) => {
+                console.error("Error:", error);
+                alert("Error: " + error);
+            }
+        );
+    }
+
+    onMount(async() => {
+        get_challenge_data();
+        get_member_data();
     });
-    // const response = await fetch("http://localhost:8000/challenges",
-    //     {
-    //         method: "GET",
-    //         headers: {
-    //             "Content-Type": "application/json",
-    //         },
-    //     })
-    //     .then((response) => response.json())
-    //     .then((data) => {
-    //         console.log(data);
-    //     })
-    //     .catch((error) => {
-    //         console.error("Error:", error);
-    //     });
 
-    // make an ajax get request to localhost:8000/members to get the member data
-
-
-
-    let member_data = [
-        {
-            id: "1",
-            name: "Mark",
-            current_challenge: "whoami",
-            start_time: "1300",
-            check_in_time: "1330",
-        },
-        {
-            id: "2",
-            name: "Jacob",
-            current_challenge: "stegosaurus",
-            start_time: "1330",
-            check_in_time: "1400",
-        },
-        {
-            id: "3",
-            name: "Larry",
-            current_challenge: "devel",
-            start_time: "1300",
-            check_in_time: "1330",
-        },
-    ];
-
-    // get the next id
+    // generate id from random
     let next_id = (member_data.length + 1).toString();
     let new_member = {
         id: next_id,
@@ -92,20 +83,20 @@
      * @param {string} id
      */
     function update_time(id) {
-        console.log("update_time");
+        console.log("update_time for " + id);
         const mod_now = dayjs().add(30, "minute").format("HHmm");
-        member_data = member_data.map((data) =>
-            data.id === id
-                ? { ...data, check_in_time: mod_now.toString() }
-                : data
-        );
+        challenge_data = challenge_data.map((data) => {
+            console.log(data);
+            if (data.id === id) {
+                console.log("match found");
+                return {
+                    ...data,
+                    checkin_time: mod_now.toString(),
+                };
+            }
+            return data;
+        });
     }
-
-    // let challenge_data = [
-    //     { name: "whoami" },
-    //     { name: "stegosaurus" },
-    //     { name: "devel" },
-    // ];
 
     let new_challenge = {
         name: "",
@@ -119,14 +110,34 @@
         };
     }
 
-    function assign_challenge() {
+    async function assign_challenge() {
         console.log("Assigning challenge...");
+        // web request to put to localhost:8000/challenges
+        const member_response = await fetch("http://localhost:8000/challenges",
+            {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                // body: JSON.stringify({""}),
+            })
+            .then((member_response) => member_response.json())
+            .then((data) => {
+                console.log(data);
+                member_data = [...member_data, data];
+            })
+            .catch((error) => {
+                console.error("Error:", error);
+                alert("Error: " + error);
+            }
+        );
     }
 </script>
 
+
 <div class="container my-4">
-    <div class="row justify-content-md-center">
-        <div class="col-md-8">
+    <div class="row justify-content-lg-center">
+        <div class="col-lg-8">
             <div class="card">
                 <div class="card-body">
                     <table class="table">
@@ -139,14 +150,14 @@
                                 <th scope="col">Checked in?</th>
                             </tr>
                         </thead>
-                        <tbody id="team_content">
-                            {#if member_data.length > 0}
-                                {#each member_data as data}
+                        <tbody id="challenge_content">
+                            {#if challenge_data.length > 0}
+                                {#each challenge_data as data}
                                     <tr>
+                                        <td>{data.member}</td>
                                         <td>{data.name}</td>
-                                        <td>{data.current_challenge}</td>
                                         <td>{data.start_time}</td>
-                                        <td>{data.check_in_time}</td>
+                                        <td>{data.checkin_time}</td>
                                         <td>
                                             <button
                                                 class="btn btn-primary"
@@ -170,8 +181,8 @@
     </div>
 </div>
 <div class="container my-4">
-    <div class="row justify-content-md-center">
-        <div class="col-md-8">
+    <div class="row justify-content-lg-center">
+        <div class="col-lg-8">
             <div class="card">
                 <div class="card-body">
                     <div
