@@ -3,7 +3,7 @@
     /**
      * @type {any[]}
      */
-    $: challenge_data = [];
+    let challenge_data = [];
 
     /**
      * @type {any[]}
@@ -125,14 +125,12 @@
             .catch((error) => {
                 console.error("Error:", error);
                 alert("Error: " + error);
-            }
-        )
+            });
         new_challenge = {
             name: "",
         };
     }
 
-    
     /**
      * @param {any} challenge_data
      */
@@ -167,7 +165,7 @@
         challenge_data.completed = true;
         console.log("Completing challenge...");
         const complete_response = await fetch(
-            "http://localhost:8000/challenges",
+            "http://localhost:8000/challenges/flag",
             {
                 method: "PUT",
                 headers: {
@@ -184,7 +182,7 @@
                 console.error("Error:", error);
                 alert("Error: " + error);
             });
-    };
+    }
 </script>
 
 <div class="container my-4">
@@ -207,42 +205,122 @@
                             {#if challenge_data.length > 0}
                                 {#each challenge_data as challenge}
                                     {#if !challenge.completed}
-                                    <tr>
-                                        <td>
-                                            <select
-                                                class="form-select"
-                                                aria-label="Default select example"
-                                                placeholder="Select member to assign"
-                                                required
-                                                bind:value={challenge.member}
-                                                on:change={() => assign_challenge(challenge)}
-                                            >
-                                                {#each member_data as member}
-                                                    <option value={member.name}
-                                                        >{member.name}</option
-                                                    >
-                                                {/each}
-                                            </select>
-                                        </td>
-                                        <td>{challenge.name}</td>
-                                        <td>{challenge.start_time}</td>
-                                        <td>{challenge.checkin_time}</td>
-                                        <td>
-                                            <button
-                                                class="btn btn-primary"
-                                                on:click={() =>
-                                                    update_time(challenge.id)}
-                                                >Yes</button
-                                            >
-                                        </td>
-                                        <td>
-                                            <button
-                                                class="btn btn-success"
-                                                on:click={() =>
-                                                    complete_challenge(challenge)}
-                                                >Yes</button
-                                            >
-                                    </tr>
+                                        <tr>
+                                            <td>
+                                                <select
+                                                    class="form-select"
+                                                    aria-label="Default select example"
+                                                    placeholder="Select member to assign"
+                                                    required
+                                                    bind:value={challenge.member}
+                                                    on:change={() =>
+                                                        assign_challenge(
+                                                            challenge
+                                                        )}
+                                                >
+                                                    {#each member_data as member}
+                                                        <option
+                                                            value={member.name}
+                                                            >{member.name}</option
+                                                        >
+                                                    {/each}
+                                                </select>
+                                            </td>
+                                            <td>{challenge.name}</td>
+                                            <td>{challenge.start_time}</td>
+                                            <td>{challenge.checkin_time}</td>
+                                            <td>
+                                                <button
+                                                    class="btn btn-primary"
+                                                    on:click={() =>
+                                                        update_time(
+                                                            challenge.id
+                                                        )}>Yes</button
+                                                >
+                                            </td>
+                                            <td>
+                                                <button
+                                                    type="button"
+                                                    class="btn btn-success"
+                                                    data-bs-toggle="modal"
+                                                    data-bs-target="#flagModal"
+                                                >
+                                                    Yes
+                                                </button>
+
+                                                <!-- Modal -->
+                                                <div
+                                                    class="modal fade"
+                                                    id="flagModal"
+                                                    tabindex="-1"
+                                                    aria-labelledby="flagModalLabel"
+                                                    aria-hidden="true"
+                                                >
+                                                    <div class="modal-dialog">
+                                                        <div
+                                                            class="modal-content"
+                                                        >
+                                                            <div
+                                                                class="modal-header"
+                                                            >
+                                                                <h1
+                                                                    class="modal-title fs-5"
+                                                                    id="flagModalLabel"
+                                                                >
+                                                                    Flag
+                                                                </h1>
+                                                                <button
+                                                                    type="button"
+                                                                    class="btn-close"
+                                                                    data-bs-dismiss="modal"
+                                                                    aria-label="Close"
+                                                                />
+                                                            </div>
+                                                            <div
+                                                                class="modal-body"
+                                                            >
+                                                            <input
+                                                                type="text"
+                                                                class="form-control"
+                                                                id="flag"
+                                                                name="flag"
+                                                                placeholder="Enter flag"
+                                                                bind:value={challenge.flag}
+                                                                required
+                                                            />
+                                                            </div>
+                                                            <div
+                                                                class="modal-footer"
+                                                            >
+                                                                <button
+                                                                    type="button"
+                                                                    class="btn btn-danger"
+                                                                    data-bs-dismiss="modal"
+                                                                    >Cancel</button
+                                                                >
+                                                                <button
+                                                                    type="button"
+                                                                    class="btn btn-success"
+                                                                    data-bs-dismiss="modal"
+                                                                    on:click={() =>
+                                                                        complete_challenge(
+                                                                            challenge
+                                                                        )}
+                                                                    >Save flag</button
+                                                                >
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <!-- <button
+                                                    class="btn btn-success"
+                                                    on:click={() =>
+                                                        complete_challenge(
+                                                            challenge
+                                                        )}>Yes</button
+                                                > -->
+                                            </td></tr
+                                        >
                                     {/if}
                                 {/each}
                             {:else}
@@ -263,62 +341,62 @@
             <div class="card">
                 <div class="card-body">
                     <div
-                    class="accordion accordion-flush"
-                    id="accordionCompletedChallenges"
-                >
-                    
-                    <div class="accordion-item">
-                        <h2 class="accordion-header">
-                            <button
-                                class="accordion-button collapsed"
-                                type="button"
-                                data-bs-toggle="collapse"
-                                data-bs-target="#flush-collapseCompleted"
-                                aria-expanded="false"
-                                aria-controls="flush-collapseCompleted"
-                            >
-                                Completed Challenges
-                            </button>
-                        </h2>
+                        class="accordion accordion-flush"
+                        id="accordionCompletedChallenges"
+                    >
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button
+                                    class="accordion-button collapsed"
+                                    type="button"
+                                    data-bs-toggle="collapse"
+                                    data-bs-target="#flush-collapseCompleted"
+                                    aria-expanded="false"
+                                    aria-controls="flush-collapseCompleted"
+                                >
+                                    Completed Challenges
+                                </button>
+                            </h2>
+                        </div>
                     </div>
-                </div>
-                <div
-                    id="flush-collapseCompleted"
-                    class="accordion-collapse collapse"
-                    data-bs-parent="#accordionCompletedChallenges"
-                >
-                    <div class="accordion-body">
-                        <table class="table">
-                            <thead>
-                                <tr>
-                                    <th scope="col">Member</th>
-                                    <th scope="col">Challenge</th>
-                                </tr>
-                            </thead>
-                            <tbody id="challenge_content">
-                                {#if challenge_data.length > 0}
-                                    {#each challenge_data as challenge}
-                                        {#if challenge.completed}
-                                            <tr>
-                                                <td>{challenge.member}</td>
-                                                <td>{challenge.name}</td>
-                                            </tr>
-                                        {/if}
-                                    {/each}
-                                {:else}
+                    <div
+                        id="flush-collapseCompleted"
+                        class="accordion-collapse collapse"
+                        data-bs-parent="#accordionCompletedChallenges"
+                    >
+                        <div class="accordion-body">
+                            <table class="table">
+                                <thead>
                                     <tr>
-                                        <td colspan="5">No data found</td>
+                                        <th scope="col">Member</th>
+                                        <th scope="col">Challenge</th>
+                                        <th scope="col">Flag</th>
                                     </tr>
-                                {/if}
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody id="challenge_content">
+                                    {#if challenge_data.length > 0}
+                                        {#each challenge_data as challenge}
+                                            {#if challenge.completed}
+                                                <tr>
+                                                    <td>{challenge.member}</td>
+                                                    <td>{challenge.name}</td>
+                                                    <td>{challenge.flag}</td>
+                                                </tr>
+                                            {/if}
+                                        {/each}
+                                    {:else}
+                                        <tr>
+                                            <td colspan="5">No data found</td>
+                                        </tr>
+                                    {/if}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
-                </div>
                 </div>
             </div>
         </div>
     </div>
-    
 </div>
 <div class="container my-4">
     <div class="row justify-content-lg-center">
@@ -465,7 +543,10 @@
                                 data-bs-parent="#accordionFlushExample"
                             >
                                 <div class="accordion-body">
-                                    <form on:submit={create_member} class="input-group mb-3">
+                                    <form
+                                        on:submit={create_member}
+                                        class="input-group mb-3"
+                                    >
                                         <input
                                             type="text"
                                             class="form-control"

@@ -26,6 +26,7 @@ class Challenge(BaseModel):
     name: str
     member: str
     completed: bool
+    flag: str
 
 class NewMember(BaseModel):
     name: str
@@ -53,7 +54,8 @@ async def read_challenges():
             "member": result[2],
             "start_time": result[3],
             "checkin_time": result[4],
-            "completed": result[5]
+            "completed": result[5],
+            "flag": result[6]
         })
     print(json.dumps(json_results))
     return json_results
@@ -64,15 +66,21 @@ async def create_item(new_challenge: NewChallenge):
     start_time = datetime.now().strftime("%H%M")
     checkin_time = (datetime.now() + timedelta(minutes=30)).strftime("%H%M")
     unique_id = str(uuid4())
-    db.insert_challenge(unique_id, new_challenge.name, "None", start_time, checkin_time)
+    db.insert_challenge(unique_id, new_challenge.name, "None", start_time, checkin_time, "")
     return {"challenge_name": new_challenge.name, "challenge_id": unique_id}
 
 @app.put("/challenges")
-async def update_item(challenge: Challenge):
+async def update_challenge(challenge: Challenge):
     db.update_challenge(challenge.id, challenge.member, challenge.completed)
-
     # db.update_challenge(challenge.id, challenge.name, challenge.member)
     return {"challenge_name": challenge.name, "challenge_id": challenge.id, "challenge_member": challenge.member, "challenge_completed": challenge.completed}
+
+@app.put("/challenges/flag")
+async def update_flag(challenge: Challenge):
+    db.update_challenge(challenge.id, challenge.member, challenge.completed)
+    db.update_challenge_flag(challenge.id, challenge.flag)
+    return {"challenge_name": challenge.name, "challenge_id": challenge.id, "challenge_member": challenge.member, "challenge_completed": challenge.completed}
+
 
 @app.delete("/challenges")
 # async def delete_item(challenge_id: str):
@@ -120,11 +128,11 @@ def test():
             self.id = id
 
     challenge_one = Challenge(name="challenge_one", id=str(uuid4())) 
-    db.insert_challenge(challenge_one.id, challenge_one.name, "None", "1200", "1230")
+    db.insert_challenge(challenge_one.id, challenge_one.name, "None", "1200", "1230", "")
     challenge_two = Challenge(name="challenge_two", id=str(uuid4()))
-    db.insert_challenge(challenge_two.id, challenge_two.name, "None", "1400", "1230")
+    db.insert_challenge(challenge_two.id, challenge_two.name, "None", "1400", "1230", "")
     challenge_three = Challenge(name="challenge_three", id=str(uuid4()))
-    db.insert_challenge(challenge_three.id, challenge_three.name, "None", "1400", "1230")
+    db.insert_challenge(challenge_three.id, challenge_three.name, "None", "1400", "1230", "")
     db.update_challenge(challenge_three.id, "the best", True)
     db.insert_member(str(uuid4()), "name1")
     db.insert_member(str(uuid4()), "name2")

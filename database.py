@@ -8,7 +8,7 @@ class Database:
         self.cur = self.conn.cursor()
         # self.cur.execute("DROP TABLE challenge")
         # self.cur.execute("DROP TABLE members")
-        self.cur.execute("CREATE TABLE IF NOT EXISTS challenge (id text, name text, member text, start_time text, checkin_time text, completed boolean)")
+        self.cur.execute("CREATE TABLE IF NOT EXISTS challenge (id text, name text, member text, start_time text, checkin_time text, completed boolean, flag text)")
         self.cur.execute("CREATE TABLE IF NOT EXISTS members (id text, name text)")
         self.conn.commit()
     
@@ -27,8 +27,8 @@ class Database:
         rows = self.cur.fetchall()
         return rows
 
-    def insert_challenge(self, id, name, member, start_time, checkin_time):
-        self.cur.execute("INSERT INTO challenge VALUES (?, ?, ?, ?, ?, False)", (id, name, member, start_time, checkin_time))
+    def insert_challenge(self, id, name, member, start_time, checkin_time, flag):
+        self.cur.execute("INSERT INTO challenge VALUES (?, ?, ?, ?, ?, False, ?)", (id, name, member, start_time, checkin_time, flag))
         self.conn.commit()
 
     def remove_challenge(self, id):
@@ -38,6 +38,10 @@ class Database:
     def update_challenge(self, id, member, completed):
         self.cur.execute("UPDATE challenge SET member = ?, completed = ? WHERE id = ?", (member, completed, id))
         print("updated challenge")
+        self.conn.commit()
+
+    def update_challenge_flag(self, id, flag):
+        self.cur.execute("UPDATE challenge SET flag = ? WHERE id = ?", (flag, id))
         self.conn.commit()
     ############################################################
     # Members
