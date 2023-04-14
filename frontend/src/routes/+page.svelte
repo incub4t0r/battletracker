@@ -10,16 +10,28 @@
      */
     let member_data = [];
 
+    let hostname = "";
+    let challenge_url = "";
+    let member_url = "";
+    let flag_url = "";
+
+    let new_member = {
+        name: "",
+    };
+
+    let new_challenge = {
+        name: "",
+    };
+
     async function get_challenge_data() {
         const challenge_response = await fetch(
-            "http://localhost:8000/challenges",
+            challenge_url,
             {
                 method: "GET",
                 headers: {
                     "Content-Type": "application/json",
                 },
-            }
-        )
+            })
             .then((challenge_response) => challenge_response.json())
             .then((data) => {
                 console.log(data);
@@ -32,12 +44,14 @@
     }
 
     async function get_member_data() {
-        const member_response = await fetch("http://localhost:8000/members", {
-            method: "GET",
-            headers: {
-                "Content-Type": "application/json",
-            },
-        })
+        const member_response = await fetch(
+            member_url, 
+            {
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+            })
             .then((member_response) => member_response.json())
             .then((data) => {
                 member_data = data;
@@ -48,20 +62,12 @@
             });
     }
 
-    onMount(async () => {
-        get_challenge_data();
-        get_member_data();
-    });
-
-    let new_member = {
-        name: "",
-    };
-
-    async function create_member() {
+    async function create_member(event) {
+        event.preventDefault();
         console.log("Adding new member...");
         //
         const create_member_response = await fetch(
-            "http://localhost:8000/members",
+            member_url,
             {
                 method: "POST",
                 headers: {
@@ -90,7 +96,7 @@
         console.log("update_time for " + id);
         const mod_now = dayjs().add(30, "minute").format("HHmm");
         challenge_data = challenge_data.map((data) => {
-            console.log(data);
+            // console.log(data);
             if (data.id === id) {
                 console.log("match found");
                 return {
@@ -102,14 +108,11 @@
         });
     }
 
-    let new_challenge = {
-        name: "",
-    };
-
-    async function add_new_challenge() {
+    async function add_new_challenge(event) {
+        event.preventDefault();
         console.log("Adding new challenge...");
         const create_response = await fetch(
-            "http://localhost:8000/challenges",
+            challenge_url,
             {
                 method: "POST",
                 headers: {
@@ -135,10 +138,10 @@
      * @param {any} challenge_data
      */
     async function assign_challenge(challenge_data) {
-        console.log(challenge_data);
+        // console.log(challenge_data);
         console.log("Assigning challenge...");
         const assign_response = await fetch(
-            "http://localhost:8000/challenges",
+            challenge_url,
             {
                 method: "PUT",
                 headers: {
@@ -161,11 +164,11 @@
      * @param {any} challenge_data
      */
     async function complete_challenge(challenge_data) {
-        console.log(challenge_data);
+        // console.log(challenge_data);
         challenge_data.completed = true;
         console.log("Completing challenge...");
         const complete_response = await fetch(
-            "http://localhost:8000/challenges/flag",
+            flag_url,
             {
                 method: "PUT",
                 headers: {
@@ -183,6 +186,15 @@
                 alert("Error: " + error);
             });
     }
+    
+    onMount(async () => {
+        hostname = document.location.hostname.toString();
+        challenge_url = "http://" + hostname + ":8000/challenges";
+        member_url = "http://" + hostname + ":8000/members";
+        flag_url = "http://" + hostname + ":8000/challenges/flag"; 
+        get_challenge_data();
+        get_member_data();
+    });
 </script>
 
 <div class="container my-4">
@@ -239,6 +251,15 @@
                                                 >
                                             </td>
                                             <td>
+                                                {#if challenge.member == "None"}
+                                                <button
+                                                    disabled
+                                                    type="button"
+                                                    class="btn btn-success"
+                                                >
+                                                    Yes
+                                                </button>
+                                                {:else}
                                                 <button
                                                     type="button"
                                                     class="btn btn-success"
@@ -247,8 +268,7 @@
                                                 >
                                                     Yes
                                                 </button>
-
-                                                <!-- Modal -->
+                                                {/if}
                                                 <div
                                                     class="modal fade"
                                                     id="flagModal"
@@ -312,20 +332,13 @@
                                                         </div>
                                                     </div>
                                                 </div>
-                                                <!-- <button
-                                                    class="btn btn-success"
-                                                    on:click={() =>
-                                                        complete_challenge(
-                                                            challenge
-                                                        )}>Yes</button
-                                                > -->
                                             </td></tr
                                         >
                                     {/if}
                                 {/each}
                             {:else}
                                 <tr>
-                                    <td colspan="5">No data found</td>
+                                    <td colspan="6">No data found</td>
                                 </tr>
                             {/if}
                         </tbody>
@@ -407,82 +420,6 @@
                         class="accordion accordion-flush"
                         id="accordionFlushExample"
                     >
-                        <!-- <div class="accordion-item">
-                            <h2 class="accordion-header">
-                                <button
-                                    class="accordion-button collapsed"
-                                    type="button"
-                                    data-bs-toggle="collapse"
-                                    data-bs-target="#flush-collapseOne"
-                                    aria-expanded="false"
-                                    aria-controls="flush-collapseOne"
-                                >
-                                    Assign member to challenge
-                                </button>
-                            </h2>
-                            <div
-                                id="flush-collapseOne"
-                                class="accordion-collapse collapse"
-                                data-bs-parent="#accordionFlushExample"
-                            >
-                                <div class="accordion-body">
-                                    <form on:submit={assign_challenge}>
-                                        <div class="mb-3">
-                                            <select
-                                                class="form-select"
-                                                aria-label="Default select example"
-                                                placeholder="Select member to assign"
-                                                required
-                                            >
-                                                <option selected
-                                                    >Select member to assign</option
-                                                >
-                                                {#each member_data as data}
-                                                    <option value={data.name}
-                                                        >{data.name}</option
-                                                    >
-                                                {/each}
-                                            </select>
-                                        </div>
-                                        <div class="mb-3">
-                                            <select
-                                                class="form-select"
-                                                aria-label="Default select example"
-                                                placeholder="Select challenge to assign"
-                                                required
-                                            >
-                                                <option selected
-                                                    >Select challenge to assign</option
-                                                >
-                                                {#each challenge_data as data}
-                                                    <option value={data.name}
-                                                        >{data.name}</option
-                                                    >
-                                                {/each}
-                                            </select>
-                                        </div>
-                                        <div class="mb-3">
-                                            <label
-                                                for="end_time"
-                                                class="form-label"
-                                                >Start time</label
-                                            >
-                                            <input
-                                                type="number"
-                                                class="form-control"
-                                                id="start_time"
-                                                name="start_time"
-                                            />
-                                        </div>
-                                        <button
-                                            type="submit"
-                                            class="btn btn-primary"
-                                            >Submit</button
-                                        >
-                                    </form>
-                                </div>
-                            </div>
-                        </div> -->
                         <div class="accordion-item">
                             <h2 class="accordion-header">
                                 <button

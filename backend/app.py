@@ -3,13 +3,12 @@ from pydantic import BaseModel
 from uuid import uuid4
 import json
 from database import Database
-# disable fastapi cors
 from fastapi.middleware.cors import CORSMiddleware
 from datetime import datetime, timedelta
 
 db = Database('store.db')
 app = FastAPI()
-# disable fastapi cors
+
 origins = ["*"]
 app.add_middleware(
     CORSMiddleware,
@@ -59,7 +58,6 @@ async def read_challenges():
         })
     print(json.dumps(json_results))
     return json_results
-    # return db.fetchall_challenge()
 
 @app.post("/challenges")
 async def create_item(new_challenge: NewChallenge):
@@ -72,7 +70,6 @@ async def create_item(new_challenge: NewChallenge):
 @app.put("/challenges")
 async def update_challenge(challenge: Challenge):
     db.update_challenge(challenge.id, challenge.member, challenge.completed)
-    # db.update_challenge(challenge.id, challenge.name, challenge.member)
     return {"challenge_name": challenge.name, "challenge_id": challenge.id, "challenge_member": challenge.member, "challenge_completed": challenge.completed}
 
 @app.put("/challenges/flag")
@@ -81,9 +78,7 @@ async def update_flag(challenge: Challenge):
     db.update_challenge_flag(challenge.id, challenge.flag)
     return {"challenge_name": challenge.name, "challenge_id": challenge.id, "challenge_member": challenge.member, "challenge_completed": challenge.completed}
 
-
 @app.delete("/challenges")
-# async def delete_item(challenge_id: str):
 async def delete_item(challenge: Challenge):
     print("received delete request")
     db.remove_challenge(challenge.id)
@@ -138,6 +133,6 @@ def test():
     db.insert_member(str(uuid4()), "name2")
 
 if __name__ == "__main__":
-    test()
+    # test()
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
